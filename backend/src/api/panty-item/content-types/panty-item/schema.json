@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "panty_items",
+  "info": {
+    "singularName": "panty-item",
+    "pluralName": "panty-items",
+    "displayName": "Panty Item"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "quantity": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "panty_items"
+    }
+  }
+}
