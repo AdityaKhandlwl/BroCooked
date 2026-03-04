@@ -1,4 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 const STRAPI_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -16,7 +17,8 @@ export const checkUser = async () => {
     return null;
   }
 
-  const subscriptionTier = "free"; // pricing logic to be implemented
+  const { has } = await auth();
+  const subscriptionTier = has({ plan: "pro" }) ? "pro" : "free";
 
   try {
     // Check if user exists in Strapi
