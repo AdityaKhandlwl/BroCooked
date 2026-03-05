@@ -111,7 +111,7 @@ export const checkUser = async () => {
     return {...newUser, subscriptionTier };
 
   } catch (error) {
-    console.error("Error in checkUser:", error.message);
+    console.error("Error in checkUser:", error);
     return null;  
   }
 };
