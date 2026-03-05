@@ -1,4 +1,5 @@
-import { getRecipeOfTheDay, getCategories, getAreas } from "@/actions/mealdb.actions";
+
+import { getAreas, getCategories, getRecipeOfTheDay } from "@/actions/mealdb.actions";
 import React from "react";
 
 const DashboardPage = async() => {
