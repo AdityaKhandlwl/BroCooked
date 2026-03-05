@@ -12,7 +12,7 @@ export default function Home() {
         <PricingTable checkoutProps={{
           appearance:{
             elements: {
-              drawerRoot: {
+              drawerRoot: {  
                 zIndex: 2000,
               }
             }
