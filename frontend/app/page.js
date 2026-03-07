@@ -8,12 +8,11 @@ export default function Home() {
         <Button variant="primary" size="xl">
           Get your Recipes
         </Button>
-
         <PricingTable checkoutProps={{
           appearance:{
             elements: {
-              drawerRoot: {  
-                zIndex: 2000,
+              drawerRoot: {
+                zIndex: 2000
               }
             }
           }
