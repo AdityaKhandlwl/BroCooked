@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
           <main className="min-h-screen">{children}</main>
           <footer className="py-8 px-4 border-t">
             <div className="max-w-6xl mx-auto flex justify-center items-center">
-              <p>Made with ❤️ by Developers</p>
+              <p>Made with ❤️ by Aditya Khandelwal</p>
             </div>
           </footer>
         </body>
