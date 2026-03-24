@@ -1,28 +1,32 @@
 import React from "react";
-import { ArrowRight, Star, Flame, Clock, Users } from "lucide-react";
-import Image from "next/image";
-import { SignUpButton } from "@clerk/nextjs";
-
-
-
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Clock, Flame, Star, Users } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
-
-
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import Image from "next/image";
+import { CardContent } from "@/components/ui/card";
+import { FEATURES, HOW_IT_WORKS_STEPS, SITE_STATS } from "@/lib/data";
+import PricingSection from "@/components/PricingSection";
 
-export default async function LandingPage() {
+export default async function Home() {
   const { has } = await auth();
   const subscriptionTier = has({ plan: "pro" }) ? "pro" : "free";
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
-      {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
-            {/* Text Content */}
             <div className="flex-1 text-center md:text-left">
-              
+              <Badge
+                variant="outline"
+                className="border-2 border-orange-600 text-orange-700 bg-orange-50 text-sm font-bold mb-6 uppercase tracking-wide"
+              >
+                <Flame className="mr-1" />
+                #1 AI Cooking Assistant
+              </Badge>
 
               <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-[0.9] tracking-tight">
                 Turn your{" "}
@@ -39,17 +43,28 @@ export default async function LandingPage() {
               </p>
 
               <Link href="/dashboard">
-                
+                <Button
+                  size="xl"
+                  variant="primary"
+                  className="px-8 py-6 text-lg"
+                >
+                  Start Cooking Free <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
               </Link>
-
               <p className="mt-6 text-sm text-stone-500">
                 <span className="font-bold text-stone-900">10k+ cooks</span>{" "}
                 joined last month
               </p>
             </div>
-
             {/* Hero Image */}
-            
+            <Card className="relative aspect-square md:aspect-4/5 border-4 border-stone-900 bg-stone-200 overflow-hidden py-0">
+              <Image
+                src="/pasta-dish.png"
+                alt="Delicious pasta dish"
+                width={500}
+                height={500}
+                className="w-full h-full object-cover"
+              />
 
               {/* Floating Card */}
               <Card className="absolute bottom-8 left-8 right-8 bg-white/95 backdrop-blur-sm border-2 border-stone-900 py-0">
@@ -85,7 +100,7 @@ export default async function LandingPage() {
                   </div>
                 </CardContent>
               </Card>
-            
+            </Card>
           </div>
         </div>
       </section>
@@ -186,9 +201,11 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      
+      {/* Pricing - Now Using Component */}
       <section className="py-24 px-4">
+        <div className="max-w-5xl mx-auto">
         <PricingSection subscriptionTier={subscriptionTier} />
+        </div>
       </section>
     </div>
   );
