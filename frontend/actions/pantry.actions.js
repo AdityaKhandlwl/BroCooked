@@ -1,6 +1,7 @@
 "use server";
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 import { request } from "@arcjet/next";
+import { checkUser } from "@/lib/checkUser";
 
 const STRAPI_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";

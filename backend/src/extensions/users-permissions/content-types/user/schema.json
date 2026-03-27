@@ -82,10 +82,7 @@
     },
     "subscriptionTier": {
       "type": "enumeration",
-      "enum": [
-        "Free ",
-        "Pro"
-      ]
+      "enum": ["Free ", "Pro"]
     },
     "recipes": {
       "type": "relation",
@@ -93,10 +90,10 @@
       "target": "api::recipe.recipe",
       "mappedBy": "author"
     },
-    "panty_items": {
+    "pantry_items": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::panty-item.panty-item",
+      "target": "api::pantry-item.pantry-item",
       "mappedBy": "owner"
     },
     "saved_recipes": {

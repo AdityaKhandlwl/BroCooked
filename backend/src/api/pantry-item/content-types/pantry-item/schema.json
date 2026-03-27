@@ -1,10 +1,10 @@
 {
   "kind": "collectionType",
-  "collectionName": "panty_items",
+  "collectionName": "pantry_items",
   "info": {
-    "singularName": "panty-item",
-    "pluralName": "panty-items",
-    "displayName": "Panty Item"
+    "singularName": "pantry-item",
+    "pluralName": "pantry-items",
+    "displayName": "Pantry Item"
   },
   "options": {
     "draftAndPublish": true
@@ -25,7 +25,7 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
-      "inversedBy": "panty_items"
+      "inversedBy": "pantry_items"
     }
   }
 }

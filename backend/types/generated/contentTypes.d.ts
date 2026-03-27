@@ -467,12 +467,12 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiPantyItemPantyItem extends Struct.CollectionTypeSchema {
-  collectionName: 'panty_items';
+export interface ApiPantryItemPantryItem extends Struct.CollectionTypeSchema {
+  collectionName: 'pantry_items';
   info: {
-    displayName: 'Panty Item';
-    pluralName: 'panty-items';
-    singularName: 'panty-item';
+    displayName: 'Pantry Item';
+    pluralName: 'pantry-items';
+    singularName: 'pantry-item';
   };
   options: {
     draftAndPublish: true;
@@ -485,7 +485,7 @@ export interface ApiPantyItemPantyItem extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::panty-item.panty-item'
+      'api::pantry-item.pantry-item'
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
@@ -1093,9 +1093,9 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
-    panty_items: Schema.Attribute.Relation<
+    pantry_items: Schema.Attribute.Relation<
       'oneToMany',
-      'api::panty-item.panty-item'
+      'api::pantry-item.pantry-item'
     >;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
@@ -1139,7 +1139,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
-      'api::panty-item.panty-item': ApiPantyItemPantyItem;
+      'api::pantry-item.pantry-item': ApiPantryItemPantryItem;
       'api::recipe.recipe': ApiRecipeRecipe;
       'api::saved-recipe.saved-recipe': ApiSavedRecipeSavedRecipe;
       'plugin::content-releases.release': PluginContentReleasesRelease;
