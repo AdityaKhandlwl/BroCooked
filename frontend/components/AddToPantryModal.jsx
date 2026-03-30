@@ -18,6 +18,8 @@ import {
 import useFetch from "@/hooks/use-fetch";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
+import ImageUploader from "./ImageUploader";
+import onImageSelect from "@/components/ImageUploader"
 
 export const AddToPantryModal = ({ isOpen, onClose, onSuccess }) => {
   const [activeTab, setActiveTab] = useState("scan");
@@ -58,6 +60,12 @@ export const AddToPantryModal = ({ isOpen, onClose, onSuccess }) => {
       if (onSuccess) onSuccess();
     }
   }, [addData]);
+
+  // Handle image selection
+  const handleImageSelect = (file) => {
+    setSelectedImage(file);
+    setScannedIngredients([onImageSelect]); // Reset when new image selected
+  };
 
   const handleClose = () => {
     setActiveTab("scan");
@@ -100,10 +108,18 @@ export const AddToPantryModal = ({ isOpen, onClose, onSuccess }) => {
               Add Manually
             </TabsTrigger>
           </TabsList>
+          <TabsContent value="scan" className="space-y-6 mt-6">
+            {scannedIngredients.length === 0? <div className="space-y-4">
+              <ImageUploader
+                onImageSelect={handleImageSelect}
+                loading={scanning}
+              />
+            </div> : <div></div> }
+          </TabsContent>
           <TabsContent value="manual" className="space-y-4">
             <form onSubmit={handleAddManual}>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label className="block text-sm font-medium text-stone-700 mb-1">
                   Ingredient Name
                 </label>
                 <input
