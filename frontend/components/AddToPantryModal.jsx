@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Camera, Loader2, Plus } from "lucide-react";
+import { Camera, Check, Loader2, Plus, X } from "lucide-react";
 import {
   addPantryItemManually,
   saveToPantry,
@@ -18,8 +18,8 @@ import {
 import useFetch from "@/hooks/use-fetch";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import ImageUploader from "./ImageUploader";
-import onImageSelect from "@/components/ImageUploader"
+import ImageUploader from "@/components/ImageUploader";
+import { Badge } from "./ui/badge";
 
 export const AddToPantryModal = ({ isOpen, onClose, onSuccess }) => {
   const [activeTab, setActiveTab] = useState("scan");
@@ -61,10 +61,18 @@ export const AddToPantryModal = ({ isOpen, onClose, onSuccess }) => {
     }
   }, [addData]);
 
+  // Update scanned ingredients when scan completes
+  useEffect(() => {
+    if (scanData?.success && scanData?.ingredients) {
+      setScannedIngredients(scanData.ingredients);
+      toast.success(`Found ${scanData.ingredients.length} ingredients!`);
+    }
+  }, [scanData]);
+
   // Handle image selection
   const handleImageSelect = (file) => {
     setSelectedImage(file);
-    setScannedIngredients([onImageSelect]); // Reset when new image selected
+    setScannedIngredients([]); // Reset scanned results when image changes
   };
 
   const handleClose = () => {
@@ -88,6 +96,39 @@ export const AddToPantryModal = ({ isOpen, onClose, onSuccess }) => {
     await addManualItem(formData);
   };
 
+  const handleScan = async () => {
+    if (!selectedImage) return;
+    const formData = new FormData();
+    formData.append("image", selectedImage);
+    await scanImage(formData);
+  };
+
+  // Handle save scanned items
+  const handleSaveScanned = async () => {
+    if (scannedIngredients.length === 0) {
+      toast.error("No ingredients to save");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("ingredients", JSON.stringify(scannedIngredients));
+    await saveScannedItems(formData);
+  };
+
+  // Handle save success
+  useEffect(() => {
+    if (saveData?.success) {
+      toast.success(saveData.message);
+      handleClose();
+      if (onSuccess) onSuccess();
+    }
+  }, [saveData]);
+
+  // Remove scanned ingredient
+  const removeIngredient = (index) => {
+    setScannedIngredients(scannedIngredients.filter((_, i) => i !== index));
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
@@ -109,12 +150,112 @@ export const AddToPantryModal = ({ isOpen, onClose, onSuccess }) => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="scan" className="space-y-6 mt-6">
-            {scannedIngredients.length === 0? <div className="space-y-4">
-              <ImageUploader
-                onImageSelect={handleImageSelect}
-                loading={scanning}
-              />
-            </div> : <div></div> }
+            {scannedIngredients.length === 0 ? (
+              <div className="space-y-4">
+                <ImageUploader
+                  onImageSelect={handleImageSelect}
+                  loading={scanning}
+                />
+
+                {selectedImage && !scanning && (
+                  <Button
+                    onClick={handleScan}
+                    variant="primary"
+                    className="w-full h-12 text-lg"
+                    disabled={scanning}
+                  >
+                    {scanning ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5 mr-2" />
+                        Scan Image
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-stone-900">
+                      Review Detected Items
+                    </h3>
+                    <p className="text-sm text-stone-600">
+                      Found {scannedIngredients.length} ingredients
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setScannedIngredients([]);
+                      setSelectedImage(null);
+                    }}
+                    className="gap-2"
+                  >
+                    <Camera className="w-4 h-4" />
+                    Scan Again
+                  </Button>
+                </div>
+                {/* Ingredients List */}
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {scannedIngredients.map((ingredient, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-stone-900">
+                          {ingredient.name}
+                        </div>
+                        <div className="text-sm text-stone-500">
+                          {ingredient.quantity}
+                        </div>
+                      </div>
+                      {ingredient.confidence && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs text-green-700 border-green-200"
+                        >
+                          {Math.round(ingredient.confidence * 100)}%
+                        </Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeIngredient(index)}
+                        className="text-stone-600 hover:text-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {/* Save Button */}
+                <Button
+                  onClick={handleSaveScanned}
+                  disabled={saving || scannedIngredients.length === 0}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white h-12 w-full"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
+                      Save {scannedIngredients.length} Items to Pantry
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="manual" className="space-y-4">
             <form onSubmit={handleAddManual}>

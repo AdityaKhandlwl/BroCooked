@@ -2,18 +2,38 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 import { request } from "@arcjet/next";
 import { checkUser } from "@/lib/checkUser";
+import { freePantryScans, proTierLimit } from "@/lib/arcjet";
 
 const STRAPI_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-const genAI = new GoogleGenerativeAI({
-  apiKey: GEMINI_API_KEY,
-});
+function getGeminiClient() {
+  // Support both common env var names and trim accidental quotes/spaces.
+  const rawKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  const apiKey = rawKey.trim().replace(/^['\"]|['\"]$/g, "");
+
+  if (!apiKey || apiKey === "your_gemini_api_key") {
+    throw new Error(
+      "Gemini API key is missing. Set GEMINI_API_KEY in frontend/.env and restart the frontend server.",
+    );
+  }
+
+  return new GoogleGenerativeAI(apiKey);
+}
+
+function isModelNotFoundError(error) {
+  const msg = error?.message || "";
+  return (
+    msg.includes("models/") &&
+    (msg.includes("is not found") || msg.includes("not supported"))
+  );
+}
 
 export async function scanPantryImage(formData) {
   try {
+    const genAI = getGeminiClient();
+
     const user = await checkUser();
     if (!user) {
       throw new Error("User not authenticated");
@@ -54,9 +74,12 @@ export async function scanPantryImage(formData) {
     const buffer = Buffer.from(bytes);
     const base64Image = buffer.toString("base64");
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash",
-    });
+    const modelCandidates = [
+      process.env.GEMINI_MODEL,
+      "gemini-2.5-flash",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+    ].filter(Boolean);
 
     const prompt = `You are a professional chef and ingredient recognition expert. Analyze this image of a pantry/fridge and identify all visible food ingredients.
 
@@ -78,17 +101,36 @@ Rules:
 - Common pantry staples are acceptable (salt, pepper, oil)
 `;
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: imageFile.type,
-          data: base64Image,
-        },
-      },
-    ]);
+    let result;
+
+    for (const modelName of modelCandidates) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        result = await model.generateContent([
+          prompt,
+          {
+            inlineData: {
+              mimeType: imageFile.type,
+              data: base64Image,
+            },
+          },
+        ]);
+        break;
+      } catch (error) {
+        if (!isModelNotFoundError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    if (!result) {
+      throw new Error(
+        `No compatible Gemini model available. Tried: ${modelCandidates.join(", ")}`,
+      );
+    }
 
     const response = await result.response;
-    const text = response.text;
+    const text = response.text();
 
     let ingredients;
     try {
@@ -116,6 +158,16 @@ Rules:
     };
   } catch (error) {
     console.error("Error scanning pantry image:", error);
+
+    if (
+      error?.message?.includes("API_KEY_INVALID") ||
+      error?.message?.includes("API key not valid")
+    ) {
+      throw new Error(
+        "Gemini API key is invalid. Update GEMINI_API_KEY in frontend/.env with a valid key, then restart the frontend server.",
+      );
+    }
+
     throw new Error(error.message || "Failed to scan image");
   }
 }

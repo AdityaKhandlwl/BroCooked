@@ -1,5 +1,3 @@
-import arcjet from "@arcjet/next";
-
 import arcjet, { shield, tokenBucket, detectBot } from "@arcjet/next";
 
 // Base Arcjet instance with global protections

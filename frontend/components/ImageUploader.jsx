@@ -1,7 +1,7 @@
 "use client";
 
-import { Camera, ImageIcon, Upload } from "lucide-react";
-import { set } from "mongoose";
+import { Camera, ImageIcon, Upload, X } from "lucide-react";
+import Image from "next/image";
 import React, { useCallback, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "./ui/button";
