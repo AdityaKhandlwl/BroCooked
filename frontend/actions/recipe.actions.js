@@ -3,9 +3,6 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 import { request } from "@arcjet/next";
 import { checkUser } from "@/lib/checkUser";
 import { freeMealRecommendations, proTierLimit } from "@/lib/arcjet";
-import { Import } from "lucide-react";
-import { STRAPI_API_TOKEN } from "@/lib/strapi";
-import { STRAPI_URL } from "@/lib/strapi";
 
 const STRAPI_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -25,8 +22,18 @@ function getGeminiClient() {
   return new GoogleGenerativeAI(apiKey);
 }
 
+function isModelNotFoundError(error) {
+  const msg = error?.message || "";
+  return (
+    msg.includes("models/") &&
+    (msg.includes("is not found") || msg.includes("not supported"))
+  );
+}
+
 export async function getRecipesByPantryIngredients() {
   try {
+    const genAI = getGeminiClient();
+
     const user = await checkUser();
     if (!user) {
       throw new Error("User not authenticated");
@@ -86,7 +93,12 @@ export async function getRecipesByPantryIngredients() {
 
     console.log("🥘 Finding recipes for ingredients:", ingredients);
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const modelCandidates = [
+      process.env.GEMINI_MODEL,
+      "gemini-2.5-flash",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+    ].filter(Boolean);
 
     const prompt = `
 You are a professional chef. Given these available ingredients: ${ingredients}
@@ -115,7 +127,25 @@ Rules:
 - Make recipes realistic and delicious
 `;
 
-    const result = await model.generateContent(prompt);
+    let result;
+
+    for (const modelName of modelCandidates) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        result = await model.generateContent(prompt);
+        break;
+      } catch (error) {
+        if (!isModelNotFoundError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    if (!result) {
+      throw new Error(
+        `No compatible Gemini model available. Tried: ${modelCandidates.join(", ")}`,
+      );
+    }
     const response = await result.response;
     const text = response.text();
 
@@ -141,7 +171,17 @@ Rules:
     };
 
   } catch (error) {
-    console.error("Error fetching recipes:", error);
-    throw error;
+    console.error("Error in generating recipe suggestions:", error);
+
+    if (
+      error?.message?.includes("API_KEY_INVALID") ||
+      error?.message?.includes("API key not valid")
+    ) {
+      throw new Error(
+        "Gemini API key is invalid. Update GEMINI_API_KEY in frontend/.env with a valid key, then restart the frontend server.",
+      );
+    }
+
+    throw new Error("Failed to generate recipe suggestions. Please try again.");
   }
 }
