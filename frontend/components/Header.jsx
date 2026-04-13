@@ -1,9 +1,4 @@
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-} from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import React from "react";
 import { Button } from "./ui/button";
 import Image from "next/image";
@@ -22,10 +17,10 @@ const Header = async () => {
       <nav className="container max-auto px-4 h-16 flex items-center justify-between">
         <Link href={user ? "/dashboard" : "/"}>
           <Image
-            src="/orange-logo.png"
-            width={60}
-            height={60}
-            className="w-16"
+            src="/bg-logo.png"
+            width={80}
+            height={80}
+            className="w-52 h-52"
             alt="BroCooked Logo"
           />
         </Link>
@@ -54,7 +49,7 @@ const Header = async () => {
 
             {user && (
               <PricingModal subscriptionTier={user.subscriptionTier}>
-                <Badge 
+                <Badge
                   variant="outline"
                   className={`flex h-8 px-3 gap-1.5 rounded-full text-xs font-semibold transition-all ${
                     user.subscriptionTier === "pro"
