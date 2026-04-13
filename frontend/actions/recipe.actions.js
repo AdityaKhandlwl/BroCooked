@@ -3,7 +3,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 import { request } from "@arcjet/next";
 import { checkUser } from "@/lib/checkUser";
 import { freeMealRecommendations, proTierLimit } from "@/lib/arcjet";
-import { DUMMY_RECIPE_RESPONSE } from "@/lib/dummy";
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
 const STRAPI_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -195,12 +195,65 @@ function normalizeTitle(title) {
     .join(" ");
 }
 
-// helper function to fetch image from unsplash
-export async function fetchRecipeImage(recipeName) {}
+function toBlocksContent(text) {
+  return [
+    {
+      type: "paragraph",
+      children: [
+        {
+          type: "text",
+          text: text || "",
+        },
+      ],
+    },
+  ];
+}
 
-// get or generate recipe details
+// helper function to fetch image from unsplash
+export async function fetchRecipeImage(recipeName) {
+  try {
+    if (!UNSPLASH_ACCESS_KEY) {
+      console.warn("⚠️ UNSPLASH_ACCESS_KEY not set, skipping image fetch");
+      return "";
+    }
+
+    const searchQuery = `${recipeName}`;
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
+        searchQuery,
+      )}&per_page=1&orientation=landscape`,
+      {
+        headers: {
+          Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      console.error("❌ Unsplash API error:", response.statusText);
+      return "";
+    }
+
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+      const photo = data.results[0];
+      console.log("✅ Found Unsplash image:", photo.urls.regular);
+      return photo.urls.regular;
+    }
+
+    return "";
+  } catch (error) {
+    console.error("❌ Error fetching Unsplash image:", error);
+    return "";
+  }
+}
+
+// Get or generate recipe details
 export async function getOrGenerateRecipe(formData) {
   try {
+    const genAI = getGeminiClient();
+
     const user = await checkUser();
     if (!user) {
       throw new Error("User not authenticated");
@@ -213,16 +266,262 @@ export async function getOrGenerateRecipe(formData) {
 
     // Normalize the title (e.g., "apple cake" → "Apple Cake")
     const normalizedTitle = normalizeTitle(recipeName);
+    console.log("🔍 Searching for recipe:", normalizedTitle);
 
-    // 1. Check if recipe already exist in DB
-    // 2. Recipe doesn't exist, generate with gemini
-    // 3. Fetch image from unsplash
-    // 4. Saves recipe to the DB
+    const isPro = user.subscriptionTier === "pro";
 
-    return DUMMY_RECIPE_RESPONSE;
+    // Step 1: Check if recipe already exists in DB (case-insensitive search)
+    const searchResponse = await fetch(
+      `${STRAPI_URL}/api/recipes?filters[title][$eqi]=${encodeURIComponent(
+        normalizedTitle,
+      )}&populate=*`,
+      {
+        headers: {
+          Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (searchResponse.ok) {
+      const searchData = await searchResponse.json();
+
+      if (searchData.data && searchData.data.length > 0) {
+        console.log("✅ Recipe found in database:", searchData.data[0].id);
+
+        // Check if user has saved this recipe
+        const savedRecipeResponse = await fetch(
+          `${STRAPI_URL}/api/saved-recipes?filters[user][id][$eq]=${user.id}&filters[recipe][id][$eq]=${searchData.data[0].id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+            },
+            cache: "no-store",
+          },
+        );
+
+        let isSaved = false;
+        if (savedRecipeResponse.ok) {
+          const savedData = await savedRecipeResponse.json();
+          isSaved = savedData.data && savedData.data.length > 0;
+        }
+
+        return {
+          success: true,
+          recipe: searchData.data[0],
+          recipeId: searchData.data[0].id,
+          isSaved: isSaved,
+          fromDatabase: true,
+          isPro,
+          message: "Recipe loaded from database",
+        };
+      }
+    }
+
+    // Step 2: Recipe doesn't exist, generate with Gemini
+    console.log("🤖 Recipe not found, generating with Gemini...");
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+
+    const prompt = `
+You are a professional chef and recipe expert. Generate a detailed recipe for: "${normalizedTitle}"
+
+CRITICAL: The "title" field MUST be EXACTLY: "${normalizedTitle}" (no changes, no additions like "Classic" or "Easy")
+
+Return ONLY a valid JSON object with this exact structure (no markdown, no explanations):
+{
+  "title": "${normalizedTitle}",
+  "description": "Brief 2-3 sentence description of the dish",
+  "category": "Must be ONE of these EXACT values: breakfast, lunch, dinner, snack, dessert",
+  "cuisine": "Must be ONE of these EXACT values: italian, chinese, mexican, indian, american, thai, japanese, mediterranean, french, korean, vietnamese, spanish, greek, turkish, moroccan, brazilian, caribbean, middle-eastern, british, german, portuguese, other",
+  "prepTime": "Time in minutes (number only)",
+  "cookTime": "Time in minutes (number only)",
+  "servings": "Number of servings (number only)",
+  "ingredients": [
+    {
+      "item": "ingredient name",
+      "amount": "quantity with unit",
+      "category": "Protein|Vegetable|Spice|Dairy|Grain|Other"
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "title": "Brief step title",
+      "instruction": "Detailed step instruction",
+      "tip": "Optional cooking tip for this step"
+    }
+  ],
+  "nutrition": {
+    "calories": "calories per serving",
+    "protein": "grams",
+    "carbs": "grams",
+    "fat": "grams"
+  },
+  "tips": [
+    "General cooking tip 1",
+    "General cooking tip 2",
+    "General cooking tip 3"
+  ],
+  "substitutions": [
+    {
+      "original": "ingredient name",
+      "alternatives": ["substitute 1", "substitute 2"]
+    }
+  ]
+}
+
+IMPORTANT RULES FOR CATEGORY:
+- Breakfast items (pancakes, eggs, cereal, etc.) → "breakfast"
+- Main meals for midday (sandwiches, salads, pasta, etc.) → "lunch"
+- Main meals for evening (heavier dishes, roasts, etc.) → "dinner"
+- Light items between meals (chips, crackers, fruit, etc.) → "snack"
+- Sweet treats (cakes, cookies, ice cream, etc.) → "dessert"
+
+IMPORTANT RULES FOR CUISINE:
+- Use lowercase only
+- Pick the closest match from the allowed values
+- If uncertain, use "other"
+
+Guidelines:
+- Make ingredients realistic and commonly available
+- Instructions should be clear and beginner-friendly
+- Include 6-10 detailed steps
+- Provide practical cooking tips
+- Estimate realistic cooking times
+- Keep total instructions under 12 steps
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Parse JSON response
+    let recipeData;
+    try {
+      const cleanText = text
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
+      recipeData = JSON.parse(cleanText);
+    } catch (parseError) {
+      console.error("Failed to parse Gemini response:", text);
+      throw new Error("Failed to generate recipe. Please try again.");
+    }
+
+    // FORCE the title to be our normalized version
+    recipeData.title = normalizedTitle;
+
+    // Validate and sanitize category
+    const validCategories = [
+      "breakfast",
+      "lunch",
+      "dinner",
+      "snack",
+      "dessert",
+    ];
+    const category = validCategories.includes(
+      recipeData.category?.toLowerCase(),
+    )
+      ? recipeData.category.toLowerCase()
+      : "dinner";
+
+    // Validate and sanitize cuisine
+    const validCuisines = [
+      "italian",
+      "chinese",
+      "mexican",
+      "indian",
+      "american",
+      "thai",
+      "japanese",
+      "mediterranean",
+      "french",
+      "korean",
+      "vietnamese",
+      "spanish",
+      "greek",
+      "turkish",
+      "moroccan",
+      "brazilian",
+      "caribbean",
+      "middle-eastern",
+      "british",
+      "german",
+      "portuguese",
+      "other",
+    ];
+    const cuisine = validCuisines.includes(recipeData.cuisine?.toLowerCase())
+      ? recipeData.cuisine.toLowerCase()
+      : "other";
+
+    // Step 3: Fetch image from Unsplash
+    console.log("🖼️ Fetching image from Unsplash...");
+    const imageUrl = await fetchRecipeImage(normalizedTitle);
+
+    // Step 4: Save generated recipe to database
+    const strapiRecipeData = {
+      data: {
+        title: normalizedTitle,
+        description: toBlocksContent(recipeData.description),
+        cuisine,
+        category,
+        ingredients: recipeData.ingredients,
+        instructions: recipeData.instructions,
+        prepTime: Number(recipeData.prepTime),
+        cookTime: Number(recipeData.cookTime),
+        serving: Number(recipeData.servings),
+        nutrition: recipeData.nutrition,
+        tips: recipeData.tips,
+        substitution: recipeData.substitutions,
+        imageUrl: imageUrl || "",
+        isPublic: true,
+        author: user.id,
+      },
+    };
+
+    console.log(
+      "📤 Saving new recipe to database with title:",
+      normalizedTitle,
+    );
+
+    const createRecipeResponse = await fetch(`${STRAPI_URL}/api/recipes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+      },
+      body: JSON.stringify(strapiRecipeData),
+    });
+
+    if (!createRecipeResponse.ok) {
+      const errorText = await createRecipeResponse.text();
+      console.error("❌ Failed to save recipe:", errorText);
+      throw new Error("Failed to save recipe to database");
+    }
+
+    const createdRecipe = await createRecipeResponse.json();
+    console.log("✅ Recipe saved to database:", createdRecipe.data.id);
+
+    return {
+      success: true,
+      recipe: {
+        ...recipeData,
+        title: normalizedTitle,
+        category,
+        cuisine,
+        imageUrl: imageUrl || "",
+      },
+      recipeId: createdRecipe.data.id,
+      isSaved: false,
+      fromDatabase: false,
+      recommendationsLimit: isPro ? "unlimited" : 5,
+      isPro,
+      message: "Recipe generated and saved successfully!",
+    };
   } catch (error) {
-    console.error("Error in getRecipeImage:", error);
-    throw new Error("Failed to get recipe image. Please try again.");
+    console.error("❌ Error in getOrGenerateRecipe:", error);
+    throw new Error(error.message || "Failed to load recipe");
   }
 }
 
