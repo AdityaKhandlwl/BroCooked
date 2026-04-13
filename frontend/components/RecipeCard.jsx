@@ -12,6 +12,29 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+function toPlainText(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+
+  if (Array.isArray(value)) {
+    return value
+      .map((node) => {
+        if (!node || typeof node !== "object") return "";
+        if (Array.isArray(node.children)) {
+          return node.children
+            .map((child) => (typeof child?.text === "string" ? child.text : ""))
+            .join("");
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+  }
+
+  return "";
+}
+
 export default function RecipeCard({ recipe, variant = "default" }) {
   // Handle different recipe data structures
   const getRecipeData = () => {
@@ -29,12 +52,12 @@ export default function RecipeCard({ recipe, variant = "default" }) {
     if (recipe.matchPercentage) {
       return {
         title: recipe.title,
-        description: recipe.description,
+        description: toPlainText(recipe.description),
         category: recipe.category,
         cuisine: recipe.cuisine,
         prepTime: recipe.prepTime,
         cookTime: recipe.cookTime,
-        servings: recipe.servings,
+        servings: recipe.servings ?? recipe.serving,
         matchPercentage: recipe.matchPercentage,
         missingIngredients: recipe.missingIngredients || [],
         image: recipe.imageUrl, // Add image support
@@ -47,12 +70,12 @@ export default function RecipeCard({ recipe, variant = "default" }) {
     if (recipe) {
       return {
         title: recipe.title,
-        description: recipe.description,
+        description: toPlainText(recipe.description),
         category: recipe.category,
         cuisine: recipe.cuisine,
         prepTime: recipe.prepTime,
         cookTime: recipe.cookTime,
-        servings: recipe.servings,
+        servings: recipe.servings ?? recipe.serving,
         image: recipe.imageUrl,
         href: `/recipe?cook=${encodeURIComponent(recipe.title)}`,
         showImage: !!recipe.imageUrl,
@@ -130,8 +153,8 @@ export default function RecipeCard({ recipe, variant = "default" }) {
                     data.matchPercentage >= 90
                       ? "bg-green-600"
                       : data.matchPercentage >= 75
-                      ? "bg-orange-600"
-                      : "bg-stone-600"
+                        ? "bg-orange-600"
+                        : "bg-stone-600"
                   } text-white text-lg px-3 py-1.5 shadow-lg`}
                 >
                   {data.matchPercentage}% Match
@@ -171,8 +194,8 @@ export default function RecipeCard({ recipe, variant = "default" }) {
                     data.matchPercentage >= 90
                       ? "bg-green-600"
                       : data.matchPercentage >= 75
-                      ? "bg-orange-600"
-                      : "bg-stone-600"
+                        ? "bg-orange-600"
+                        : "bg-stone-600"
                   } text-white text-lg px-3 py-1`}
                 >
                   {data.matchPercentage}%
