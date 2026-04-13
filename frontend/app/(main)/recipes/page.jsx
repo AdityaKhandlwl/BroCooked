@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getSavedRecipes } from "@/actions/recipe.actions";
 import RecipeCard from "@/components/RecipeCard";
-
+export const dynamic = "force-dynamic";
 export default async function SavedRecipesPage() {
   let recipes = [];
 
