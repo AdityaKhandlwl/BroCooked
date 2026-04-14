@@ -3,8 +3,10 @@ import {
   getCategories,
   getRecipeOfTheDay,
 } from "@/actions/mealdb.actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getCategoryEmoji, getCountryFlag } from "@/lib/data";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Flame, Globe } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -14,7 +16,7 @@ const DashboardPage = async () => {
   const categoriesData = await getCategories();
   const areasData = await getAreas();
 
-  const recipeOfTheDay = recipeData?.recipe;
+  const recipeOfTheDay = recipeData || null;
   const categories = categoriesData?.categories || [];
   const areas = areasData?.areas || [];
 
