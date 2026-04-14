@@ -2,6 +2,7 @@
 #  BroCooked
 
 BroCooked is a full-stack AI recipe SaaS application. It helps users scan pantry ingredients, generate recipes with AI, browse cooking ideas by category and cuisine, and save favorite recipes in a personal cookbook.
+
 🌐 **Live:** https://bro-cooked.vercel.app/
 
 ## Overview
