@@ -82,7 +82,7 @@
     },
     "subscriptionTier": {
       "type": "enumeration",
-      "enum": ["Free ", "Pro"]
+      "enum": ["free", "pro"]
     },
     "recipes": {
       "type": "relation",

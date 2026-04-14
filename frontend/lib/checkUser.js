@@ -88,7 +88,7 @@ export const checkUser = async () => {
       clerkId: user.id,
       firstName: user.firstName || "",
       lastName: user.lastName || "",
-      imageaUrl: user.imageUrl || "",
+      imageUrl: user.imageUrl || "",
       subscriptionTier,
     };
 

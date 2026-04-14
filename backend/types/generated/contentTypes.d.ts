@@ -1114,7 +1114,7 @@ export interface PluginUsersPermissionsUser
       'oneToMany',
       'api::saved-recipe.saved-recipe'
     >;
-    subscriptionTier: Schema.Attribute.Enumeration<['Free ', 'Pro']>;
+    subscriptionTier: Schema.Attribute.Enumeration<['free', 'pro']>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
