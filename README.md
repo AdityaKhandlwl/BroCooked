@@ -1,24 +1,14 @@
-<<<<<<< HEAD
-
 #  BroCooked
 
 BroCooked is a full-stack AI recipe SaaS application. It helps users scan pantry ingredients, generate recipes with AI, browse cooking ideas by category and cuisine, and save favorite recipes in a personal cookbook.
 
 🌐 **Live:** https://bro-cooked.vercel.app/
-
-=======
-# BroCooked
-
-BroCooked is a full-stack AI recipe SaaS application. It helps users scan pantry ingredients, generate recipes with AI, browse cooking ideas by category and cuisine, and save favorite recipes in a personal cookbook.
-
->>>>>>> 34283f3 (fix cuisine page fetch action)
 ## Overview
 
 The project is split into two main parts:
 
 - `frontend/` - a Next.js application that handles the user interface, authentication, recipe generation flow, pantry management, and saved recipes.
 - `backend/` - a Strapi CMS that stores users, pantry items, recipes, and saved recipe relationships.
-<<<<<<< HEAD
 =======
 
 BroCooked combines several services:
@@ -29,7 +19,6 @@ BroCooked combines several services:
 - Arcjet for request protection and usage limits.
 - Strapi for data persistence.
 
->>>>>>> 34283f3 (fix cuisine page fetch action)
 ## Features
 
 ### User-facing features
@@ -53,7 +42,6 @@ BroCooked combines several services:
 - Unsplash image lookup for generated recipes.
 - Support for AI recipe generation fallback models.
 
-<<<<<<< HEAD
 ## Main Flows
 
 ### 1. Authentication
@@ -89,8 +77,7 @@ Frontend routes currently include:
 - `/recipes/cuisine/[cuisine]` - recipe browsing by cuisine
 - `/sign-in` - Clerk sign-in flow
 - `/sign-up` - Clerk sign-up flow
-=======
->>>>>>> 34283f3 (fix cuisine page fetch action)
+  
 ## Tech Stack
 
 ### Frontend
@@ -101,11 +88,8 @@ Frontend routes currently include:
 - Clerk
 - Gemini SDK
 - Arcjet
-<<<<<<< HEAD
-=======
 - `@react-pdf/renderer`
 - Sonner for toast notifications
->>>>>>> 34283f3 (fix cuisine page fetch action)
 
 ### Backend
 
@@ -130,8 +114,6 @@ Frontend routes currently include:
 - `src/extensions/users-permissions/` - custom user schema extensions
 - `config/` - Strapi configuration
 - `database/migrations/` - database migration files
-<<<<<<< HEAD
-=======
 
 ## Main Flows
 
@@ -169,17 +151,13 @@ Frontend routes currently include:
 - `/recipes/cuisine/[cuisine]` - recipe browsing by cuisine
 - `/sign-in` - Clerk sign-in flow
 - `/sign-up` - Clerk sign-up flow
-
->>>>>>> 34283f3 (fix cuisine page fetch action)
+- 
 ## Environment Variables
 
 ### Frontend
 
-<<<<<<< HEAD
-=======
 Set these values in your frontend environment file:
 
->>>>>>> 34283f3 (fix cuisine page fetch action)
 - `NEXT_PUBLIC_STRAPI_API_URL` - Strapi base URL
 - `STRAPI_API_TOKEN` - token used for authenticated Strapi requests
 - `GEMINI_API_KEY` or `GOOGLE_API_KEY` - Gemini API key
@@ -190,7 +168,6 @@ Set these values in your frontend environment file:
 
 Strapi uses its own environment configuration for database and deployment settings.
 
-<<<<<<< HEAD
 ## Installation
 =======
 ## Scripts
@@ -210,7 +187,6 @@ Strapi uses its own environment configuration for database and deployment settin
 - `npm run deploy` - deploy Strapi
 
 ## Local Setup
->>>>>>> 34283f3 (fix cuisine page fetch action)
 
 1. Install dependencies in both apps.
 2. Configure the frontend environment variables.
@@ -231,10 +207,8 @@ cd frontend
 npm install
 npm run dev
 ```
-<<<<<<< HEAD
 =======
 
->>>>>>> 34283f3 (fix cuisine page fetch action)
 ## Data Model Summary
 
 The app currently relies on these main Strapi entities:
@@ -243,7 +217,6 @@ The app currently relies on these main Strapi entities:
 - `pantry-item` - pantry ingredients and quantities
 - `recipe` - generated or browsed recipes
 - `saved-recipe` - join table linking users to saved recipes
-<<<<<<< HEAD
 =======
 
 ## Notes
